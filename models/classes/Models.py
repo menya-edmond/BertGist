@@ -6,7 +6,7 @@ import torch.nn as nn
 from transformers import AutoModelForSequenceClassification
 
 
-class EpidBioELECTRA(nn.Module):
+class BertGist(nn.Module):
     """
     BertGist Model addopted from pretrained BERT on huggingface library built on pytorch classes
     """

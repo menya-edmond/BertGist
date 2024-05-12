@@ -1,18 +1,10 @@
-
-import os
-import re
-import csv
-import itertools
-import json
 import sys
 import torch
 import numpy as np
-import sacremoses as ms
 from optparse import OptionParser
 from torch.utils.data import DataLoader
-from transformers import BertForTokenClassification, AdamW, AutoTokenizer, AutoModelForMaskedLM, AutoModel, ElectraForPreTraining, ElectraTokenizerFast
-
-from datasets import Dataset, load_dataset
+from transformers import AutoTokenizer
+from datasets import load_dataset
 
 
 if __name__ == "__main__":

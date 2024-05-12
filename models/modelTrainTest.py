@@ -1,5 +1,5 @@
 """
-Module contains methods to train and test epidemiological corpus taggers found in models.py
+Module contains methods to train and test food security index predictor found in models.py
 
 """
 
@@ -23,7 +23,7 @@ import evaluate
 __author__ = "Edmond Menya"
 __email__ = "edmondmenya@gmail.com"
 
-def train_epoch(model,train_dataloader,optimizer,device,scheduler): #here
+def train_epoch(model,train_dataloader,optimizer,device,scheduler,num_training_steps): #here
     """
     Trains model for every epoch
     :param model: object of food security model being run
@@ -35,6 +35,7 @@ def train_epoch(model,train_dataloader,optimizer,device,scheduler): #here
     """
     model = model.train()
     losses = []
+    progress_bar = tqdm(range(num_training_steps))
     
     for batch in train_dataloader:
         batch = {k: v.to(device) for k, v in batch.items()}
@@ -47,6 +48,7 @@ def train_epoch(model,train_dataloader,optimizer,device,scheduler): #here
         optimizer.zero_grad()
 
         losses.append(loss.item())
+        progress_bar.update(1)
 
     return np.mean(losses)
 
@@ -54,7 +56,7 @@ def train_epoch(model,train_dataloader,optimizer,device,scheduler): #here
 def model_eval(model,test_dataloader,device): #here
     """
     Evaluates the model after training by computing test accuracy and error rates
-    :param model: object of epid model being tested
+    :param model: object of food security model being tested
     :param data_loader: object of test dataset
     :param device: GPU device being used to run model
     :return: test accuracy,test loss,f_score value,precision value,recall value
@@ -68,29 +70,23 @@ def model_eval(model,test_dataloader,device): #here
             
 
         logits = outputs.logits
-        predictions = torch.argmax(logits, dim=-1)
+        #predictions = torch.argmax(logits, dim=-1)
         metric.add_batch(predictions=logits, references=batch["labels"])
 
     return metric.compute(squared=False)
 
 def k_fold_cross_val(epochs,device,model_choice,tokenizer,train_dataloader, test_dataloader):
     """
-    Trains and tests epid model using cross validation technigue and averages the cross validated models performance
-    :param num_folds: value of k for the k-fold corss validator
-    :param epochs: number of iterations to run for every k-fold instance
-    :param batch_size: the set batch value for dataset segmentations
-    :param max_len: the set max token length per corpus
-    :param input_ids: token position ids for input corpus words as tokenized by model pretrained tokenizer
-    :param labels: labels for corpus in dataset
-    :param attention_masks: attention mask that corresponds with input_id token positions
+    Trains and tests food security prediction model 
+    :param epochs: number of iterations to run for every instance
     :param device: GPU device being used to run k-folded models
-    :return: accuracy for each fold,f_score value for each fold,precision value for each fold,recall value for each fold
+    :return: rmse 
     """
     acc_per_fold = []
 
 
     if model_choice == 'bert':
-        model = Models.EpidBioELECTRA()
+        model = Models.BertGist()
         
     model.to(device)
     
@@ -109,7 +105,7 @@ def k_fold_cross_val(epochs,device,model_choice,tokenizer,train_dataloader, test
         
         total_loss = 0
         print(f'======== Epoch {epoch+1}/{epochs} ========')
-        train_loss = train_epoch(model,train_dataloader,optimizer,device,scheduler) #here
+        train_loss = train_epoch(model,train_dataloader,optimizer,device,scheduler,num_training_steps) #here
         #train_acc,train_loss = train_epoch(model,train_dataloader,loss_fn,optimizer,scheduler,max_grad_norm)
         #train_acc = train_acc/normalizer
         #print(f'Train Loss: {train_loss} Train Accuracy: {train_acc}')
