@@ -26,23 +26,19 @@ __email__ = "edmondmenya@gmail.com"
 def train_epoch(model,train_dataloader,optimizer,device,scheduler): #here
     """
     Trains model for every epoch
-    :param model: object of epid model being run
+    :param model: object of food security model being run
     :param data_loader: object of train dataset
-    :param loss_fn: loss function to be used in training
     :param optimizer: optimizer algorithm to be used in training
     :param device: GPU device being used to run model
     :param scheduler: scheduler value to reduce learning rate as training progresses
-    :param max_grad_norm: grad norm value for gradient clipping
     :return: computed train accuracy, computed train loss
     """
     model = model.train()
     losses = []
     
-    #for epoch in range(num_epochs):
     for batch in train_dataloader:
-        #print(batch.items())
         batch = {k: v.to(device) for k, v in batch.items()}
-        outputs = model(**batch)
+        outputs = model(batch)
         loss = outputs.loss
         loss.backward()
 
@@ -55,12 +51,11 @@ def train_epoch(model,train_dataloader,optimizer,device,scheduler): #here
     return np.mean(losses)
 
 
-def model_eval(model,test_dataloader,loss_fn,device): #here
+def model_eval(model,test_dataloader,device): #here
     """
     Evaluates the model after training by computing test accuracy and error rates
     :param model: object of epid model being tested
     :param data_loader: object of test dataset
-    :param loss_fn: loss function to be used in testing
     :param device: GPU device being used to run model
     :return: test accuracy,test loss,f_score value,precision value,recall value
     """
@@ -69,7 +64,7 @@ def model_eval(model,test_dataloader,loss_fn,device): #here
     for batch in test_dataloader:
         batch = {k: v.to(device) for k, v in batch.items()}
         with torch.no_grad():
-            outputs = model(**batch)
+            outputs = model(batch)
             
 
         logits = outputs.logits
@@ -95,18 +90,10 @@ def k_fold_cross_val(epochs,device,model_choice,tokenizer,train_dataloader, test
 
 
     if model_choice == 'bert':
-        model = Models.EpidBioELECTRA(device)
+        model = Models.EpidBioELECTRA()
         
     model.to(device)
-
-    param_optimizer = list(model.named_parameters())
-    no_decay = ['bias', 'gamma', 'beta']
-    optimizer_grouped_parameters = [
-            {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)],
-            'weight_decay_rate': 0.01},
-            {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
-            'weight_decay_rate': 0.0}
-        ]
+    
 
     optimizer = AdamW(model.parameters(), lr=5e-5)
 
